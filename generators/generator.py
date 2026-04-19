@@ -82,6 +82,27 @@ class DirectGenerator:
         # Apply cache decorator to _generate method if enabled
         if self._cache_decorator.config.enabled:
             self._generate = self._cache_decorator(self._generate, generator_instance=self)
+
+    def _initialize_client(self):
+        """Initialize or reinitialize the OpenAI-compatible client."""
+        if self.api_mode == "openai_sse":
+            # SSE mode uses raw httpx requests in _create_chat_completion_via_sse,
+            # so no OpenAI client is required for the request path.
+            self.client = None
+            return
+
+        if "21020" in self.base_url:
+            # Some internal gateways use self-signed certs.
+            self.client = OpenAI(
+                api_key=self.api_key,
+                base_url=self.base_url,
+                http_client=httpx.Client(verify=False)
+            )
+        else:
+            self.client = OpenAI(
+                base_url=self.base_url,
+                api_key=self.api_key
+            )
     
     def _create_chat_completion(self, api_params: Dict[str, Any]):
         if self.api_mode == "openai_sse":
