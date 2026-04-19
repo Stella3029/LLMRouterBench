@@ -280,3 +280,53 @@ results/inference
 
 # SGI-Bench runner script (contains local config, use run_sgibench.sh.example as template)
 run_sgibench.sh
+
+# ============================================================
+# LLMRouterBench 针对性补充 (防止 LFS 爆炸及冗余上传)
+# ============================================================
+
+# 1. 彻底排除所有大型数据文件和权重 (无论在哪个文件夹下)
+*.pt
+*.pth
+*.bin
+*.joblib
+*.npy
+*.npz
+*.parquet
+*.zip
+*.tar.gz
+*.7z
+
+# 2. 排除 data 目录下的所有实际数据内容 (保留目录结构)
+# 该项目通常在 data/ 下有各数据集子目录
+data/**/*.json
+data/**/*.jsonl
+data/**/*.csv
+
+# 3. 排除各 Baseline 产生的中间特征/嵌入缓存
+# 很多路由算法会预计算 embedding 存为本地文件
+**/cache/**
+**/*.emb
+
+# 4. 排除所有运行日志和临时文件
+*.log
+**/logs/**
+wandb/
+.tensorboard/
+
+# 5. 排除结果输出 (除非你想在 GitHub 备份实验结果)
+# 默认只保留 .gitkeep 以维持目录结构
+results/**/*
+!results/**/.gitkeep
+
+# 6. 排除本地环境与敏感信息
+.env
+.python-version
+node_modules/
+.vscode/
+.idea/
+
+# 7. 针对你提到的 fork 仓库与 Git LFS 限制
+# 如果你不想让任何文件走 LFS，可以尝试在 .gitignore 排除所有可能触发 LFS 的大后缀
+/baselines/**/data/*
+/baselines/**/checkpoints/*
