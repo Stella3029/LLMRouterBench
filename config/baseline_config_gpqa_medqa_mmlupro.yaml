@@ -1,0 +1,27 @@
+baseline:
+  results_dir: "results/bench"
+
+  filters:
+    skip_demo: true
+    datasets: ["gpqa", "medqa", "mmlupro"]
+    models:
+      - "qwen2.5-14b"
+      - "phi4-14b"
+      - "deepseek-r1-14b"
+      - "qwen3.5-plus"
+      - "qwen3.5-397b-a17b"
+      - "kimi-k2.5"
+    splits: ["test"]
+    exclude_datasets: null
+    exclude_models: null
+    exclude_splits: null
+
+  columns:
+    include:
+      - dataset_id
+      - split
+      - model_name
+      - record_index
+      - prompt
+      - score
+      - cost

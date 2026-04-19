@@ -1,0 +1,15 @@
+# llm2-style Redis placeholder config for future extension.
+# IMPORTANT: current LLMRouterBench checkout does NOT natively support Redis.
+# This file is a configuration placeholder only, not an active runtime integration.
+
+cache:
+  enabled: false
+  host: "202.120.5.12"
+  port: 6379
+  password: "replace-with-your-redis-password"
+  key_prefix: "llmrouterbench-cache"
+
+notes:
+  status: "placeholder_only"
+  reason: "current repo does not ship a native Redis cache backend"
+  reference: "llm2/configs/default.yaml"

@@ -1430,6 +1430,8 @@ Examples:
                     'total_queries': results['total_queries'],
                     'dataset_performance': dict(results['dataset_performance']),
                     'model_selection_stats': dict(results['model_selection_stats']),
+                    'dataset_model_selection': {k: dict(v) for k, v in results.get('dataset_model_selection', {}).items()},
+                    'dataset_model_accuracy': {k: dict(v) for k, v in results.get('dataset_model_accuracy', {}).items()},
                     # Add OOD/non-OOD metrics
                     'ood_accuracy': results.get('ood_accuracy', 0.0),
                     'non_ood_accuracy': results.get('non_ood_accuracy', 0.0),

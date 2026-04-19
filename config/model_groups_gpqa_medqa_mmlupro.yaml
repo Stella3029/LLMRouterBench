@@ -1,0 +1,12 @@
+# Model groups for GPQA / MedQA / MMLUPro routing experiments.
+# Adapted from llm2/configs/default.yaml and used by observability scripts.
+
+small_models:
+  - qwen2.5-14b
+  - phi4-14b
+  - deepseek-r1-14b
+
+large_models:
+  - qwen3.5-plus
+  - qwen3.5-397b-a17b
+  - kimi-k2.5

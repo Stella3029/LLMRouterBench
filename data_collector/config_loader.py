@@ -103,6 +103,7 @@ class ConfigLoader:
                 )
 
             # Resolve environment variables
+            model_config['base_url'] = self._resolve_env_var(model_config['base_url'])
             model_config['api_key'] = self._resolve_env_var(model_config['api_key'])
             
             models.append(ModelConfig(**model_config))
@@ -135,7 +136,10 @@ class ConfigLoader:
         """Resolve environment variable references in config values"""
         if isinstance(value, str) and value.upper() in os.environ:
             resolved = os.environ[value.upper()]
-            logger.debug(f"Resolved environment variable {value} -> {resolved[:8]}...")
+            if "KEY" in value.upper():
+                logger.debug(f"Resolved environment variable {value} -> {resolved[:8]}...")
+            else:
+                logger.debug(f"Resolved environment variable {value} -> {resolved}")
             return resolved
         return value
     

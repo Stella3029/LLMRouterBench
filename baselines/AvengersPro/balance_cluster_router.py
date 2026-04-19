@@ -726,6 +726,8 @@ def main():
                 'total_queries': results['total_queries'],
                 'dataset_performance': dict(results['dataset_performance']),
                 'model_selection_stats': dict(results['model_selection_stats']),
+                'dataset_model_selection': {k: dict(v) for k, v in results.get('dataset_model_selection', {}).items()},
+                'dataset_model_accuracy': {k: dict(v) for k, v in results.get('dataset_model_accuracy', {}).items()},
                 # Add OOD/non-OOD metrics
                 'ood_accuracy': results.get('ood_accuracy', 0.0),
                 'non_ood_accuracy': results.get('non_ood_accuracy', 0.0),
@@ -742,13 +744,12 @@ def main():
         # Save results to JSON if output specified
         json_path = None
         if args.output:
-            # Ensure output is in results directory
-            json_path = Path("results") / Path(args.output).name
+            json_path = Path(args.output)
             json_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             with open(json_path, 'w', encoding='utf-8') as f:
                 json.dump(results_serializable, f, indent=2, ensure_ascii=False)
-            
+
             print(f"\nResults saved to: {json_path}")
         
         # Always auto-export to markdown format
@@ -762,7 +763,7 @@ def main():
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 md_filename = f"balance_experiment_{timestamp}.md"
             
-            exporter = ExperimentExporter("experiment_reports")
+            exporter = ExperimentExporter("baselines/AvengersPro/experiment_reports")
             md_path = exporter.export_balance_results(results_serializable, config.to_dict(), md_filename)
             
             print(f"📄 Markdown report exported to: {md_path}")

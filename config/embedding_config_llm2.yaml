@@ -1,0 +1,35 @@
+# Embedding config adapted from llm2/configs/default.yaml.
+# This file now uses the shared unified environment variable names and real Redis cache.
+
+embedding_model:
+  name: nomic-embed-text
+  api_model_name: nomic-embed-text
+  generator_type: embedding
+  base_url: EMBEDDING_BASE_URL
+  api_key: EMBEDDING_API_KEY
+  timeout: 120
+  max_context_length: 8192
+
+cache:
+  enabled: REDIS_ENABLED
+  backend: redis
+  force_override_cache: false
+  redis:
+    host: REDIS_HOST
+    port: REDIS_PORT
+    password: REDIS_PASSWORD
+    db: REDIS_DB
+    key_prefix: REDIS_KEY_PREFIX
+    ssl: REDIS_SSL
+    ttl_seconds: null
+  key_generator:
+    cached_parameters: ["model", "input"]
+    hash_algorithm: blake2b
+    hash_digest_size: 16
+  conditions:
+    cache_successful_only: true
+    min_completion_tokens: 0
+    cache_raw_response: false
+    refresh_if_missing_raw_response: false
+  log_level: INFO
+  enable_stats: true

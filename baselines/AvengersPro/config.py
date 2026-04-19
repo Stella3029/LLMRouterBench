@@ -106,7 +106,7 @@ class SimpleClusterConfig:
             raise ValueError(f"max_router must be positive, got {self.max_router}")
             
         if not self.embedding_api_key:
-            raise ValueError("EMBEDDING_API_KEY environment variable is required")
+            raise ValueError("embedding_api_key is required (usually resolve it from EMBEDDING_API_KEY in config)")
 
         if self.embedding_config_path:
             config_path = Path(self.embedding_config_path)
@@ -224,6 +224,11 @@ class SimpleClusterConfig:
         """
         with open(config_file, 'r', encoding='utf-8') as f:
             config_dict = json.load(f)
+
+        for key in ["embedding_api_key", "embedding_base_url", "embedding_model"]:
+            value = config_dict.get(key)
+            if isinstance(value, str) and value.isupper() and "_" in value:
+                config_dict[key] = os.getenv(value, value)
         
         # Validate that required paths are present
         if "train_data_path" not in config_dict:

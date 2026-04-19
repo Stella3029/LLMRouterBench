@@ -3,6 +3,7 @@ import json
 import os
 import random
 
+import torch
 import torch.nn as nn
 import torch.optim
 from torch.utils.data import Dataset, DataLoader, ConcatDataset
@@ -403,6 +404,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--training_samples_per_dataset', type=int, default=1000)
     parser.add_argument('--deepspeed', type=str, default='ds_config.json', help='Deepspeed configuration file')
+    parser.add_argument('--model_name', type=str, default='gte_Qwen2-7B-instruct', help='HuggingFace model name or local path for the router encoder backbone')
     parser.add_argument('--wandb_project', type=str, default='routerdc', help='Weights & Biases project name')
     parser.add_argument('--wandb_entity', type=str, default=None, help='Weights & Biases entity name')
     parser.add_argument('--wandb_run_name', type=str, default=None, help='Weights & Biases run name')
@@ -452,15 +454,15 @@ if __name__ == '__main__':
     # Set seed
     setup_seed(args.seed)
 
-    # get router model (mdeberta-v3-base)
-    MODEL_NAME = "/fs-computility-new/Uma4agi/shared/models/gte_Qwen2-7B-instruct"
+    # get router model (encoder backbone)
+    model_name = args.model_name
     tokenizer = AutoTokenizer.from_pretrained(
-        MODEL_NAME,
+        model_name,
         truncation_side='left',
         padding=True,
         trust_remote_code=True
     )
-    encoder_model = AutoModel.from_pretrained(MODEL_NAME, trust_remote_code=True)
+    encoder_model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
     for param in encoder_model.parameters():
         param.requires_grad = True
         

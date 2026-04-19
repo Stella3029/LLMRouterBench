@@ -10,7 +10,24 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 from loguru import logger
 import tiktoken
 
-from common.cache.decorator import create_cache_decorator
+try:
+    from common.cache.decorator import create_cache_decorator
+except ModuleNotFoundError:
+    class _NoOpCacheConfig:
+        enabled = False
+
+    class _NoOpCacheDecorator:
+        def __init__(self):
+            self.config = _NoOpCacheConfig()
+
+        def __call__(self, func, generator_instance=None):
+            return func
+
+    def create_cache_decorator(cache_config=None):
+        logger.warning(
+            "Cache backend modules are unavailable in this checkout; falling back to no-cache mode."
+        )
+        return _NoOpCacheDecorator()
 
 
 class NonRetryableError(Exception):
