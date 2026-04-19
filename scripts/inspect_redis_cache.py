@@ -9,7 +9,7 @@ def main():
     parser.add_argument('--port', type=int, default=6379)
     parser.add_argument('--password', default='')
     parser.add_argument('--db', type=int, default=0)
-    parser.add_argument('--prefix', default='llmrouterbench:cache')
+    parser.add_argument('--prefix', default='llm-cache')
     args = parser.parse_args()
 
     import redis

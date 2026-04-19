@@ -21,6 +21,7 @@ class ModelConfig:
     extra_body: Dict[str, Any] = None
     pricing: Dict[str, Any] = None
     extract_fields: Dict[str, str] = None  # Field extraction config: {field_name: response_path}
+    api_mode: Optional[str] = None
 
     def __post_init__(self):
         if self.extra_body is None:

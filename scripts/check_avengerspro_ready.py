@@ -18,6 +18,8 @@ def main():
         'avengers_simple_config': root / 'baselines/AvengersPro/config/simple_config_gpqa_medqa_mmlupro.json',
         'avengers_balance_config': root / 'baselines/AvengersPro/config/balance_config_gpqa_medqa_mmlupro.json',
         'model_groups': root / 'config/model_groups_gpqa_medqa_mmlupro.yaml',
+        'collector_wrapper': root / 'scripts/run_collector_with_cache_mode.py',
+        'connectivity_wrapper': root / 'scripts/run_connectivity_with_cache_mode.py',
     }
 
     result = {name: path.exists() for name, path in checks.items()}

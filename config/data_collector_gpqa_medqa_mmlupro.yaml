@@ -69,6 +69,18 @@ models:
       prompt_price_per_million: 0.3827
       completion_price_per_million: 1.72
 
+  - name: gpt-5.4
+    api_model_name: gpt-5.4
+    base_url: GPT54_BASE_URL
+    api_key: GPT54_API_KEY
+    api_mode: openai_sse
+    temperature: 0.0
+    top_p: 1.0
+    timeout: 240
+    pricing:
+      prompt_price_per_million: 2.5
+      completion_price_per_million: 15.0
+
 datasets:
   - dataset_id: gpqa
     splits: ["test"]

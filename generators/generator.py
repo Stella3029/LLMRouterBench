@@ -9,6 +9,7 @@ from openai import OpenAI
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, retry_if_not_exception_type
 from loguru import logger
 import tiktoken
+from .token_utils import count_tokens
 
 try:
     from common.cache.decorator import create_cache_decorator
@@ -52,14 +53,15 @@ class EmbeddingOutput:
 
 class DirectGenerator:
     """Direct LLM generator with caching and retry logic"""
-    
-    def __init__(self, model_name: str, base_url: str, api_key: str, 
+
+    def __init__(self, model_name: str, base_url: str, api_key: str,
                  temperature: float = 0.0, top_p: float = 1.0, timeout: int = 500,
                  cache_config: Optional[Dict[str, Any]] = None,
                  pricing_config: Optional[Dict[str, Any]] = None,
                  extra_body: Optional[Dict[str, Any]] = None,
                  config_name: Optional[str] = None,
-                 reasoning_effort: Optional[Any] = None):
+                 reasoning_effort: Optional[Any] = None,
+                 api_mode: Optional[str] = None):
         self.model_name = model_name
         self.config_name = config_name or model_name  # Use config name for cache keys
         self.base_url = base_url
@@ -68,6 +70,7 @@ class DirectGenerator:
         self.top_p = top_p
         self.timeout = timeout
         self.reasoning_effort = reasoning_effort
+        self.api_mode = api_mode or "openai"
         self.pricing_config = pricing_config or {}
         self.extra_body = extra_body or {}
         self.cache_config = cache_config
@@ -80,19 +83,82 @@ class DirectGenerator:
         if self._cache_decorator.config.enabled:
             self._generate = self._cache_decorator(self._generate, generator_instance=self)
     
-    def _initialize_client(self):
-        """Initialize or reinitialize the OpenAI client"""
-        if "21020" in self.base_url: # For AILAB only
-            self.client = OpenAI(
-                api_key=self.api_key,
-                base_url=self.base_url,
-                http_client=httpx.Client(verify=False)
-            )
-        else:
-            self.client = OpenAI(
-                base_url=self.base_url,
-                api_key=self.api_key
-            )
+    def _create_chat_completion(self, api_params: Dict[str, Any]):
+        if self.api_mode == "openai_sse":
+            return self._create_chat_completion_via_sse(api_params)
+        return self.client.chat.completions.create(**api_params)
+
+    def _create_chat_completion_via_sse(self, api_params: Dict[str, Any]):
+        payload = {
+            "model": api_params["model"],
+            "messages": api_params["messages"],
+            "temperature": api_params.get("temperature", self.temperature),
+            "top_p": api_params.get("top_p", self.top_p),
+            "stream": True,
+        }
+        if "reasoning_effort" in api_params:
+            payload["reasoning_effort"] = api_params["reasoning_effort"]
+        if "extra_body" in api_params and isinstance(api_params["extra_body"], dict):
+            payload.update(api_params["extra_body"])
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+        response = httpx.post(
+            f"{self.base_url.rstrip('/')}/chat/completions",
+            json=payload,
+            headers=headers,
+            timeout=self.timeout,
+        )
+        response.raise_for_status()
+
+        text_parts = []
+        for line in response.text.splitlines():
+            line = line.strip()
+            if not line.startswith("data:"):
+                continue
+            data = line[5:].strip()
+            if data == "[DONE]":
+                break
+            try:
+                chunk = json.loads(data)
+            except json.JSONDecodeError:
+                continue
+            choices = chunk.get("choices") or []
+            if not choices:
+                continue
+            delta = choices[0].get("delta", {})
+            content = delta.get("content")
+            if isinstance(content, str) and content:
+                text_parts.append(content)
+
+        content = "".join(text_parts)
+
+        class _Usage:
+            prompt_tokens = None
+            completion_tokens = None
+            cost = None
+
+        class _Message:
+            def __init__(self, content):
+                self.content = content
+
+        class _Choice:
+            def __init__(self, content):
+                self.message = _Message(content)
+
+        class _Response:
+            def __init__(self, content, raw_text):
+                self.usage = _Usage()
+                self.choices = [_Choice(content)]
+                self._raw_text = raw_text
+
+            def model_dump_json(self):
+                return self._raw_text
+
+        return _Response(content, response.text)
+
     
     def _log_retry(self, retry_state):
         exception = retry_state.outcome.exception()
@@ -127,26 +193,33 @@ class DirectGenerator:
             if self.extra_body:
                 api_params["extra_body"] = self.extra_body
             
-            response = self.client.chat.completions.create(**api_params)
+            response = self._create_chat_completion(api_params)
 
-            usage = response.usage
+            usage = getattr(response, 'usage', None)
             choices = response.choices
 
             if not choices or choices[0].message.content is None:
                 raise ValueError("Empty response from LLM")
 
+            prompt_tokens = getattr(usage, 'prompt_tokens', None)
+            completion_tokens = getattr(usage, 'completion_tokens', None)
+            if prompt_tokens is None:
+                prompt_tokens = count_tokens(question)
+            if completion_tokens is None:
+                completion_tokens = count_tokens(choices[0].message.content)
+
             # Calculate cost
-            cost = self._calculate_cost(usage)
+            cost = self._calculate_cost(usage, prompt_tokens, completion_tokens)
 
             # Cache raw response if configured
             raw_response = None
-            if self._should_cache_raw_response():
+            if self._should_cache_raw_response() and hasattr(response, 'model_dump_json'):
                 raw_response = response.model_dump_json()
 
             result = GeneratorOutput(
                 output=choices[0].message.content,
-                prompt_tokens=usage.prompt_tokens,
-                completion_tokens=usage.completion_tokens,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
                 cost=cost,
                 raw_response=raw_response
             )
@@ -187,30 +260,33 @@ class DirectGenerator:
         conditions = self.cache_config.get('conditions', {})
         return conditions.get('cache_raw_response', False)
 
-    def _calculate_cost(self, usage) -> float:
-        """Calculate cost based on usage object"""
+    def _calculate_cost(self, usage, prompt_tokens: int = 0, completion_tokens: int = 0) -> float:
+        """Calculate cost based on usage object or fallback token counts"""
         try:
             # First try to use cost from usage object if available
-            if hasattr(usage, 'cost') and usage.cost is not None:
+            if usage is not None and hasattr(usage, 'cost') and usage.cost is not None:
                 return float(usage.cost)
-            
+
             # Fallback to pricing configuration
             if self.pricing_config:
                 prompt_price = self.pricing_config.get('prompt_price_per_million', 0.0)
                 completion_price = self.pricing_config.get('completion_price_per_million', 0.0)
-                
+
                 if prompt_price > 0 or completion_price > 0:
-                    prompt_cost = (usage.prompt_tokens / 1_000_000) * prompt_price
-                    completion_cost = (usage.completion_tokens / 1_000_000) * completion_price
+                    if usage is not None:
+                        prompt_tokens = getattr(usage, 'prompt_tokens', prompt_tokens) or prompt_tokens
+                        completion_tokens = getattr(usage, 'completion_tokens', completion_tokens) or completion_tokens
+                    prompt_cost = (prompt_tokens / 1_000_000) * prompt_price
+                    completion_cost = (completion_tokens / 1_000_000) * completion_price
                     return prompt_cost + completion_cost
-            
+
             return 0.0
-            
+
         except Exception as e:
             logger.warning(
                 f"Failed to calculate cost for model {self.model_name}: {str(e)}. "
-                f"Usage: prompt_tokens={usage.prompt_tokens}, "
-                f"completion_tokens={usage.completion_tokens}"
+                f"Usage fallback: prompt_tokens={prompt_tokens}, "
+                f"completion_tokens={completion_tokens}"
             )
             return 0.0
 
@@ -218,13 +294,14 @@ class DirectGenerator:
 class MultimodalGenerator(DirectGenerator):
     """Multimodal LLM generator that supports images along with text"""
     
-    def __init__(self, model_name: str, base_url: str, api_key: str, 
+    def __init__(self, model_name: str, base_url: str, api_key: str,
                  temperature: float = 0.0, top_p: float = 1.0, timeout: int = 500,
                  cache_config: Optional[Dict[str, Any]] = None,
                  pricing_config: Optional[Dict[str, Any]] = None,
                  extra_body: Optional[Dict[str, Any]] = None,
                  config_name: Optional[str] = None,
-                 reasoning_effort: Optional[Any] = None):
+                 reasoning_effort: Optional[Any] = None,
+                 api_mode: Optional[str] = None):
         super().__init__(
             model_name=model_name,
             base_url=base_url,
@@ -236,7 +313,8 @@ class MultimodalGenerator(DirectGenerator):
             pricing_config=pricing_config,
             extra_body=extra_body,
             config_name=config_name,
-            reasoning_effort=reasoning_effort
+            reasoning_effort=reasoning_effort,
+            api_mode=api_mode
         )
         
         # Apply cache decorator to _generate_multimodal method if enabled
@@ -287,16 +365,10 @@ class MultimodalGenerator(DirectGenerator):
         for image_path in images:
             try:
                 # Check if it's already base64 encoded
-                if image_path.startswith('data:image/'):
-                    # Already in data URI format
+                if image_path.startswith('data:image/') or image_path.startswith('http://') or image_path.startswith('https://'):
+                    # Already in data URI format or remote URL format
                     image_contents.append({
                         "type": "image_url",
-                        "image_url": {"url": image_path}
-                    })
-                elif image_path.startswith('http://') or image_path.startswith('https://'):
-                    # URL format
-                    image_contents.append({
-                        "type": "image_url", 
                         "image_url": {"url": image_path}
                     })
                 else:
@@ -407,26 +479,33 @@ class MultimodalGenerator(DirectGenerator):
             if self.extra_body:
                 api_params["extra_body"] = self.extra_body
             
-            response = self.client.chat.completions.create(**api_params)
+            response = self._create_chat_completion(api_params)
 
-            usage = response.usage
+            usage = getattr(response, 'usage', None)
             choices = response.choices
 
             if not choices or choices[0].message.content is None:
                 raise ValueError("Empty response from multimodal LLM")
 
+            prompt_tokens = getattr(usage, 'prompt_tokens', None)
+            completion_tokens = getattr(usage, 'completion_tokens', None)
+            if prompt_tokens is None:
+                prompt_tokens = count_tokens(question)
+            if completion_tokens is None:
+                completion_tokens = count_tokens(choices[0].message.content)
+
             # Calculate cost
-            cost = self._calculate_cost(usage)
+            cost = self._calculate_cost(usage, prompt_tokens, completion_tokens)
 
             # Cache raw response if configured
             raw_response = None
-            if self._should_cache_raw_response():
+            if self._should_cache_raw_response() and hasattr(response, 'model_dump_json'):
                 raw_response = response.model_dump_json()
 
             result = GeneratorOutput(
                 output=choices[0].message.content,
-                prompt_tokens=usage.prompt_tokens,
-                completion_tokens=usage.completion_tokens,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
                 cost=cost,
                 raw_response=raw_response
             )
@@ -529,15 +608,19 @@ class EmbeddingGenerator(DirectGenerator):
                 timeout=self.timeout
             )
 
-            usage = response.usage
+            usage = getattr(response, 'usage', None)
             embedding_data = response.data[0]
 
             if not embedding_data.embedding:
                 raise ValueError("Empty embedding response from model")
 
+            prompt_tokens = getattr(usage, 'prompt_tokens', None)
+            if prompt_tokens is None:
+                prompt_tokens = count_tokens(text)
+
             result = EmbeddingOutput(
                 embeddings=embedding_data.embedding,
-                prompt_tokens=usage.prompt_tokens
+                prompt_tokens=prompt_tokens
             )
 
             return result

@@ -10,3 +10,4 @@ large_models:
   - qwen3.5-plus
   - qwen3.5-397b-a17b
   - kimi-k2.5
+  - gpt-5.4

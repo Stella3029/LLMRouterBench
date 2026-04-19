@@ -37,6 +37,7 @@ def create_generator(model_config: Dict[str, Any],
         "timeout": model_config.get("timeout", 500),
         "reasoning_effort": model_config.get("reasoning_effort"),
         "extra_body": model_config.get("extra_body", {}),
+        "api_mode": model_config.get("api_mode"),
         "cache_config": cache_config,
         "pricing_config": model_config.get("pricing", {}),
     }

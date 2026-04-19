@@ -11,6 +11,7 @@ baseline:
       - "qwen3.5-plus"
       - "qwen3.5-397b-a17b"
       - "kimi-k2.5"
+      - "gpt-5.4"
     splits: ["test"]
     exclude_datasets: null
     exclude_models: null
