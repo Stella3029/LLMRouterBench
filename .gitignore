@@ -306,6 +306,13 @@ data/**/*.csv
 # 3. 排除各 Baseline 产生的中间特征/嵌入缓存
 # 很多路由算法会预计算 embedding 存为本地文件
 **/cache/**
+!common/cache/
+!common/cache/__init__.py
+!common/cache/config.py
+!common/cache/decorator.py
+!common/cache/key_generator.py
+!common/cache/mysql_store.py
+!common/cache/redis_store.py
 **/*.emb
 
 # 4. 排除所有运行日志和临时文件
