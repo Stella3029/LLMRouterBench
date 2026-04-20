@@ -1,23 +1,20 @@
 # Cache Writer Configuration
-# This configuration is used to write existing result data into cache
+# Legacy cache writer now targets Redis-shaped cache settings.
 
-models: []  # No models needed for cache writing
+models: []
 
-# Cache configuration - same as used in normal runs
 cache:
   enabled: true
+  backend: redis
   force_override_cache: false
-  mysql:
-    host: MYSQL_HOST
-    port: MYSQL_PORT
-    user: MYSQL_USER
-    password: MYSQL_PASSWORD
-    database: avengers_cache_demo
-    table_name: generator_output_cache
-    charset: utf8mb4
-    autocommit: true
+  redis:
+    host: REDIS_HOST
+    port: REDIS_PORT
+    password: REDIS_PASSWORD
+    db: REDIS_DB
+    key_prefix: REDIS_KEY_PREFIX
+    ssl: REDIS_SSL
     ttl_seconds: null
-    use_connection_pool: false
   key_generator:
     cached_parameters: ["model", "temperature", "top_p", "messages", "reasoning_effort"]
     hash_algorithm: blake2b
@@ -25,46 +22,25 @@ cache:
   conditions:
     cache_successful_only: true
     min_completion_tokens: 0
+    cache_raw_response: false
+    refresh_if_missing_raw_response: false
   log_level: INFO
   enable_stats: true
 
-# Cache writer specific settings
 cache_writer:
-  # Directory containing result files to process
   results_directory: "results/bench"
-  
-  # Benchmarks to skip (as requested)
   skip_benchmarks: []
-  
-  # Datasets to include for processing (empty list means process all datasets)
-  # Useful for dataset-by-dataset debugging
-  include_datasets: ["arcc", "emorynlp", "gpqa", "mathbench", "medqa", "meld", "mmlupro", "winogrande"]  # Example: ["gpqa", "aime-experiment", "hle-experiment"]
-  
-  # Temperature to use for cache key generation (as requested)
+  include_datasets: ["arcc", "emorynlp", "gpqa", "mathbench", "medqa", "meld", "mmlupro", "winogrande"]
   temperature: 0.2
-  
-  # Top_p setting for consistency
   top_p: 1.0
-  
-  # Batch size for processing
   batch_size: 1024
-  
-  # Enable progress reporting
   show_progress: true
-  
-  # Maximum records to process (for testing, set to null for all)
   max_records: null
-  
-  # Cache write retry and verification settings
-  max_retries: 10                    # Maximum number of retry attempts for failed cache writes
-  retry_delay: 0.1                  # Base delay in seconds between retries (exponential backoff)
-  enable_write_verification: true   # Verify cache writes by immediately reading back the data
-  
-  # Model filtering settings (can be overridden by command line arguments)
-  include_models: []                 # Models to include (empty list means include all models)
-                                     # Example: ["claude_4_sonnet", "gpt-5-chat", "gemini_2.5_pro"]
-  exclude_models: []                 # Models to exclude from processing
-                                     # Example: ["claude_4.1_opus", "gpt-5-medium"]
+  max_retries: 10
+  retry_delay: 0.1
+  enable_write_verification: true
+  include_models: []
+  exclude_models: []
 
-datasets: []  # No datasets needed for cache writing
-run: {}       # No run config needed for cache writing
+datasets: []
+run: {}

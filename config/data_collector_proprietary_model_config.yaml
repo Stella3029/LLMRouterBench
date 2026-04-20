@@ -2,24 +2,17 @@
 # This file shows all available configuration options with examples
 # Copy and modify this file to create your own configuration
 
-# ================================
-# MODEL CONFIGURATIONS
-# ================================
-# Define the LLM models you want to benchmark
-# Each model requires: name, api_model_name, base_url, api_key
-
 models:
-  # OpenAI-style API models
   - name: gemini-2.5-flash
     api_model_name: google/gemini-2.5-flash
     base_url: https://openrouter.ai/api/v1
     api_key: OPENROUTER_API_KEY
     temperature: 0.2
     top_p: 1.0
-    timeout: 1800 # For reasoning, we need to set a longer timeout
-    extra_body: # openrouter only
-        usage:
-          include: true
+    timeout: 1800
+    extra_body:
+      usage:
+        include: true
 
   - name: gemini-2.5-pro
     api_model_name: google/gemini-2.5-pro
@@ -27,10 +20,10 @@ models:
     api_key: OPENROUTER_API_KEY
     temperature: 0.2
     top_p: 1.0
-    timeout: 1800 # For reasoning, we need to set a longer timeout
-    extra_body: # openrouter only
-        usage:
-          include: true
+    timeout: 1800
+    extra_body:
+      usage:
+        include: true
 
   - name: claude-sonnet-4
     api_model_name: anthropic/claude-sonnet-4
@@ -38,10 +31,10 @@ models:
     api_key: OPENROUTER_API_KEY
     temperature: 0.2
     top_p: 1.0
-    timeout: 1800 # For reasoning, we need to set a longer timeout
-    extra_body: # openrouter only
-        usage:
-          include: true
+    timeout: 1800
+    extra_body:
+      usage:
+        include: true
 
   - name: qwen3-235b-a22b-2507
     api_model_name: qwen/qwen3-235b-a22b-2507
@@ -49,13 +42,13 @@ models:
     api_key: OPENROUTER_API_KEY
     temperature: 0.2
     top_p: 1.0
-    timeout: 1800 # For reasoning, we need to set a longer timeout
-    extra_body: # openrouter only
-        usage:
-          include: true
-        provider:
-          only: ['novita/fp8']
-          allow_fallbacks: False
+    timeout: 1800
+    extra_body:
+      usage:
+        include: true
+      provider:
+        only: ['novita/fp8']
+        allow_fallbacks: False
 
   - name: qwen3-235b-a22b-thinking-2507
     api_model_name: qwen/qwen3-235b-a22b-thinking-2507
@@ -63,13 +56,13 @@ models:
     api_key: OPENROUTER_API_KEY
     temperature: 0.2
     top_p: 1.0
-    timeout: 1800 # For reasoning, we need to set a longer timeout
-    extra_body: # openrouter only
-        usage:
-          include: true
-        provider:
-          only: ['deepinfra/fp8']
-          allow_fallbacks: False
+    timeout: 1800
+    extra_body:
+      usage:
+        include: true
+      provider:
+        only: ['deepinfra/fp8']
+        allow_fallbacks: False
 
   - name: gpt-5-chat
     api_model_name: openai/gpt-5-chat
@@ -77,10 +70,10 @@ models:
     api_key: OPENROUTER_API_KEY
     temperature: 0.2
     top_p: 1.0
-    timeout: 1800 # For reasoning, we need to set a longer timeout
-    extra_body: # openrouter only
-        usage:
-          include: true
+    timeout: 1800
+    extra_body:
+      usage:
+        include: true
 
   - name: gpt-5
     api_model_name: openai/gpt-5
@@ -88,11 +81,11 @@ models:
     api_key: OPENROUTER_API_KEY
     temperature: 0.2
     top_p: 1.0
-    timeout: 1800 # For reasoning, we need to set a longer timeout
+    timeout: 1800
     reasoning_effort: medium
-    extra_body: # openrouter only
-        usage:
-          include: true
+    extra_body:
+      usage:
+        include: true
 
   - name: glm-4.6
     api_model_name: z-ai/glm-4.6
@@ -100,13 +93,13 @@ models:
     api_key: OPENROUTER_API_KEY
     temperature: 0.2
     top_p: 1.0
-    timeout: 1800 # For reasoning, we need to set a longer timeout
-    extra_body: # openrouter only
-        usage:
-          include: true
-        provider:
-          only: ['siliconflow/fp8']
-          allow_fallbacks: False
+    timeout: 1800
+    extra_body:
+      usage:
+        include: true
+      provider:
+        only: ['siliconflow/fp8']
+        allow_fallbacks: False
 
   - name: kimi-k2-0905
     api_model_name: moonshotai/kimi-k2-0905
@@ -114,13 +107,13 @@ models:
     api_key: OPENROUTER_API_KEY
     temperature: 0.2
     top_p: 1.0
-    timeout: 1800 # For reasoning, we need to set a longer timeout
-    extra_body: # openrouter only
-        usage:
-          include: true
-        provider:
-          only: ['deepinfra/fp4']
-          allow_fallbacks: False
+    timeout: 1800
+    extra_body:
+      usage:
+        include: true
+      provider:
+        only: ['deepinfra/fp4']
+        allow_fallbacks: False
 
   - name: deepseek-v3.1-terminus
     api_model_name: deepseek/deepseek-v3.1-terminus
@@ -128,13 +121,13 @@ models:
     api_key: OPENROUTER_API_KEY
     temperature: 0.2
     top_p: 1.0
-    timeout: 1800 # For reasoning, we need to set a longer timeout
-    extra_body: # openrouter only
-        usage:
-          include: true
-        provider:
-          only: ['novita/fp8']
-          allow_fallbacks: False
+    timeout: 1800
+    extra_body:
+      usage:
+        include: true
+      provider:
+        only: ['novita/fp8']
+        allow_fallbacks: False
 
   - name: deepseek-v3-0324
     api_model_name: deepseek
@@ -142,9 +135,9 @@ models:
     api_key: AILAB_API_KEY
     temperature: 0.2
     top_p: 1.0
-    timeout: 1800 # For reasoning, we need to set a longer timeout
+    timeout: 1800
     pricing:
-      prompt_price_per_million: 0.25 # TODO: check the pricing on openrouter
+      prompt_price_per_million: 0.25
       completion_price_per_million: 0.88
 
   - name: deepseek-r1-0528
@@ -153,9 +146,9 @@ models:
     api_key: AILAB_API_KEY
     temperature: 0.2
     top_p: 1.0
-    timeout: 3600 # For reasoning, we need to set a longer timeout
+    timeout: 3600
     pricing:
-      prompt_price_per_million: 0.50 # TODO: check the pricing on openrouter
+      prompt_price_per_million: 0.50
       completion_price_per_million: 2.15
 
   - name: intern-s1
@@ -166,63 +159,13 @@ models:
     top_p: 1.0
     timeout: 1800
     generator_type: multimodal
-
     pricing:
-      prompt_price_per_million: 0.18 # TODO: check the pricing on openrouter
+      prompt_price_per_million: 0.18
       completion_price_per_million: 0.54
-
-  # - name: glm-4.6-thinking
-  #   api_model_name: z-ai/glm-4.6
-  #   base_url: https://openrouter.ai/api/v1
-  #   api_key: OPENROUTER_API_KEY
-  #   temperature: 0.2
-  #   top_p: 1.0
-  #   timeout: 1800 # For reasoning, we need to set a longer timeout
-  #   extra_body: # openrouter only
-  #       usage:
-  #         include: true
-  #       provider:
-  #         only: ['siliconflow/fp8']
-  #         allow_fallbacks: False
-  #       reasoning: 
-  #         enable: true
-
-  # - name: qwen3-235b-a22b-no-thinking
-  #   api_model_name: qwen
-  #   base_url: https://180.163.156.43:21020/qwen3-235B/v1/
-  #   api_key: AILAB_API_KEY
-  #   temperature: 0.2
-  #   top_p: 1.0
-  #   timeout: 1800 # For reasoning, we need to set a longer timeout
-  #   pricing:
-  #     prompt_price_per_million: 0.18 # TODO: check the pricing on openrouter
-  #     completion_price_per_million: 0.54
-
-  # - name: qwen3-235b-a22b-thinking
-  #   api_model_name: qwen
-  #   base_url: https://180.163.156.43:21020/qwen3-235B/v1/
-  #   api_key: AILAB_API_KEY
-  #   temperature: 0.2
-  #   top_p: 1.0
-  #   timeout: 3600 # For reasoning, we need to set a longer timeout
-  #   pricing:
-  #     prompt_price_per_million: 0.18 # TODO: check the pricing on openrouter
-  #     completion_price_per_million: 0.54
-
-  # - name: gpt-4.1
-  #   api_model_name: openai/gpt-4.1
-  #   base_url: https://openrouter.ai/api/v1
-  #   api_key: OPENROUTER_API_KEY
-  #   temperature: 0.2
-  #   top_p: 1.0
-  #   timeout: 1800 # For reasoning, we need to set a longer timeout
-  #   extra_body: # openrouter only
-  #       usage:
-  #         include: true
 
 datasets:
   - dataset_id: aime
-    splits: ["hybrid"] # 2024 + 2025
+    splits: ["hybrid"]
   - dataset_id: arenahard
     splits: ["test"]
   - dataset_id: arc-agi
@@ -239,61 +182,61 @@ datasets:
     splits: ["test_3000"]
   - dataset_id: simpleqa
     splits: ["test"]
-    
+
 run:
   output_dir: ./results
   overwrite: false
-  concurrency: 32 # Setting the parameter too high makes HumanEval and MBPP fail.
+  concurrency: 32
   log_level: INFO
 
 cache:
   enabled: true
+  backend: redis
   force_override_cache: false
-  mysql:
-    host: MYSQL_HOST
-    port: MYSQL_PORT
-    user: MYSQL_USER
-    password: MYSQL_PASSWORD
-    database: avengers_cache_demo
-    table_name: generator_output_cache
-    charset: utf8mb4
-    autocommit: true
+  redis:
+    host: REDIS_HOST
+    port: REDIS_PORT
+    password: REDIS_PASSWORD
+    db: REDIS_DB
+    key_prefix: REDIS_KEY_PREFIX
+    ssl: REDIS_SSL
     ttl_seconds: null
-
-    use_connection_pool: false
-    pool_size: 4
-    max_overflow: 2
-    pool_timeout: 10
-    pool_recycle: 3600
-
   key_generator:
     cached_parameters: ["model", "temperature", "top_p", "messages", "reasoning_effort"]
     hash_algorithm: blake2b
     hash_digest_size: 16
-
   conditions:
     cache_successful_only: true
     min_completion_tokens: 0
-
+    cache_raw_response: false
+    refresh_if_missing_raw_response: false
   log_level: INFO
   enable_stats: true
 
-grader_cache: # For HLE SIMPLEQA SFE llm-as-judge
+grader_cache:
   enabled: true
+  backend: redis
   force_override_cache: false
-  mysql:
-    host: MYSQL_HOST
-    port: MYSQL_PORT
-    user: MYSQL_USER
-    password: MYSQL_PASSWORD
-    database: avengers_cache_demo
-    table_name: grader_output_cache
+  redis:
+    host: REDIS_HOST
+    port: REDIS_PORT
+    password: REDIS_PASSWORD
+    db: REDIS_DB
+    key_prefix: REDIS_KEY_PREFIX
+    ssl: REDIS_SSL
+    ttl_seconds: null
   key_generator:
     cached_parameters:
       - model
       - messages
       - temperature
       - top_p
+    hash_algorithm: blake2b
+    hash_digest_size: 16
   conditions:
     cache_successful_only: true
     min_completion_tokens: 1
+    cache_raw_response: false
+    refresh_if_missing_raw_response: false
+  log_level: INFO
+  enable_stats: true

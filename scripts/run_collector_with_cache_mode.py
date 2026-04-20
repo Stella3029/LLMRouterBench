@@ -5,9 +5,12 @@ import sys
 from pathlib import Path
 
 
+DISABLED_VALUES = {"0", "false", "no", "off"}
+
+
 def parse_args():
-    parser = argparse.ArgumentParser(description='Run collector with explicit cache mode override')
-    parser.add_argument('--cache-mode', choices=['redis', 'disabled'], required=True)
+    parser = argparse.ArgumentParser(description='Run collector with default Redis cache or explicit disable mode')
+    parser.add_argument('--cache-mode', choices=['default', 'disabled'], default='default')
     parser.add_argument('--config', default='config/data_collector_gpqa_medqa_mmlupro.yaml')
     parser.add_argument('--extra-args', nargs='*', default=[])
     return parser.parse_args()
@@ -17,10 +20,17 @@ def main():
     args = parse_args()
     repo_root = Path(__file__).resolve().parent.parent
     env = os.environ.copy()
-    env['REDIS_ENABLED'] = 'true' if args.cache_mode == 'redis' else 'false'
+
+    if args.cache_mode == 'disabled':
+        env['REDIS_ENABLED'] = 'false'
+        cache_mode_label = 'disabled'
+    else:
+        if str(env.get('REDIS_ENABLED', '')).strip().lower() in DISABLED_VALUES:
+            env.pop('REDIS_ENABLED', None)
+        cache_mode_label = 'redis (default runtime config)'
 
     cmd = [sys.executable, '-m', 'data_collector.cli', 'run', args.config, '-y', *args.extra_args]
-    print(f"[collector-wrapper] cache mode: {args.cache_mode}")
+    print(f"[collector-wrapper] cache mode: {cache_mode_label}")
     print(f"[collector-wrapper] command: {' '.join(cmd)}")
     raise SystemExit(subprocess.call(cmd, cwd=repo_root, env=env))
 

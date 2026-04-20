@@ -12,7 +12,7 @@ Some benchmarks are **too complex to integrate** into the standard pipeline:
 
 **external_bench provides minimal-touch integration**:
 - Use LLMRouterBench's unified API management (`DirectGenerator`)
-- Benefit from MySQL caching to reduce API costs
+- Benefit from Redis caching to reduce API costs and support resumable runs
 - Keep your entire evaluation system unchanged
 
 ---
@@ -33,53 +33,19 @@ generator = DirectGenerator(
     model_name="anthropic/claude-3.5-sonnet",
     api_key=os.environ["ANTHROPIC_API_KEY"],
     base_url="https://api.anthropic.com/v1",
-    cache_config=cache_config  # Optional
+    cache_config=cache_config  # Optional Redis cache config
 )
 ```
 
 ### Step 3: Replace API Calls
 
 ```python
-# Before
-def query_model(prompt):
-    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return response.choices[0].message.content
-
-# After
 def query_model(prompt):
     result = generator.generate(prompt)
     return result.output
 ```
 
-### Step 4: Collect Results
-
-```python
-start_timer()
-record_results = []
-
-for i, task in enumerate(tasks):
-    response = query_model(build_prompt(task))
-    is_correct = evaluate_response(response, task)
-
-    record_results.append(RecordResult(
-        index=i,
-        origin_query=task['question'],
-        prompt=prompt,
-        prompt_tokens=generator.last_prompt_tokens,
-        completion_tokens=generator.last_completion_tokens,
-        cost=generator.last_cost,
-        score=1.0 if is_correct else 0.0,
-        prediction=response,
-        ground_truth=task['answer'],
-        raw_output=response
-    ))
-```
-
-### Step 5: Save Results
+### Step 4: Save Results
 
 ```python
 accuracy = finish_benchmark(record_results, "gpt-4", "your_benchmark", "test")
@@ -93,54 +59,14 @@ accuracy = finish_benchmark(record_results, "gpt-4", "your_benchmark", "test")
 
 ```python
 DirectGenerator(
-    model_name: str,           # API model identifier
-    api_key: str,              # API key or env var name
-    base_url: str,             # API endpoint URL
+    model_name: str,
+    api_key: str,
+    base_url: str,
     temperature: float = 0.7,
     max_tokens: int = 2048,
-    cache_config: dict = None  # MySQL cache config
-)
-
-result = generator.generate(prompt: str)
-# Returns: GeneratorOutput (output, prompt_tokens, completion_tokens, cost)
-```
-
-### RecordResult
-
-```python
-RecordResult(
-    index: int,
-    origin_query: str,
-    prompt: str,
-    prompt_tokens: int,
-    completion_tokens: int,
-    cost: float,
-    score: float,              # 1.0 = correct, 0.0 = incorrect
-    prediction: str,
-    ground_truth: str,
-    raw_output: str
+    cache_config: dict = None  # Redis cache config
 )
 ```
-
-### finish_benchmark
-
-```python
-accuracy = finish_benchmark(
-    record_results: List[RecordResult],
-    model_name: str,
-    dataset_name: str = "external_bench",
-    split: str = "test",
-    base_dir: str = "results/bench/external_bench"
-)
-```
-
----
-
-## 📄 Result Storage
-
-Results saved to: `results/bench/external_bench/<dataset>/<split>/<model>/<timestamp>.json`
-
-Format matches LLMRouterBench's standard for compatibility with baselines and analysis tools.
 
 ---
 
@@ -151,7 +77,7 @@ Format matches LLMRouterBench's standard for compatibility with baselines and an
 - [ ] Add `RecordResult` collection after each evaluation
 - [ ] Call `start_timer()` at benchmark start
 - [ ] Call `finish_benchmark()` at benchmark end
-- [ ] (Optional) Enable MySQL caching
+- [ ] (Optional) Enable Redis caching
 
 **Do NOT**:
 - Refactor benchmark structure

@@ -140,6 +140,12 @@ pip install -r requirements.txt
 
 ## Quick Start
 
+Cache behavior:
+- Runtime cache is **Redis-first and Redis-only**.
+- Collector/connectivity/avengers entrypoints default to Redis automatically.
+- Put Redis settings in `.env`; no wrapper, no `--cache-mode redis`, and no MySQL fallback are required.
+- If Redis is unavailable, runtime logs `Redis unavailable, cache disabled` and continues uncached.
+
 <table>
 <tr>
 <td>

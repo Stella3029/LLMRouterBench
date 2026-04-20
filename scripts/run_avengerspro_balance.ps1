@@ -8,9 +8,9 @@ New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
 $config = 'baselines/AvengersPro/config/balance_config_gpqa_medqa_mmlupro.json'
 $resultFile = Join-Path $outputDir 'results_avengerspro_balance_gpqa_medqa_mmlupro.json'
 $summaryFile = Join-Path $outputDir 'summary_avengerspro_balance_gpqa_medqa_mmlupro.json'
-$cacheMode = if ($env:REDIS_ENABLED -match '^(?i:true|1|yes|on)$') { 'redis' } else { 'disabled' }
 
-Write-Host "[avengerspro-balance] cache mode: $cacheMode"
+Write-Host "[avengerspro-balance] runtime cache backend: redis (default)"
+Write-Host "[avengerspro-balance] Redis settings are loaded from .env / environment at runtime"
 Write-Host "[avengerspro-balance] readiness check"
 python scripts/check_avengerspro_ready.py --repo-root $RepoRoot
 

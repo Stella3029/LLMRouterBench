@@ -1,32 +1,32 @@
 # Redis extension notes for LLMRouterBench
 
-当前仓库并不原生支持 Redis。
+当前仓库已经统一为 Redis-first、Redis-only 的运行时缓存设计。
 
-已确认的事实：
-- 现有配置文件中的缓存结构都是 `mysql:` 风格，例如：
-  - `config/data_collector_small_model_config.yaml`
-  - `config/data_collector_proprietary_model_config.yaml`
-  - `config/embedding_config.yaml`
-  - `.env.example`
+当前行为：
+- `common/cache/` 提供正式 Redis 运行时缓存实现。
 - 生成器侧缓存入口在 `generators/generator.py` 中通过 `common.cache.decorator.create_cache_decorator` 接入。
-- 但当前 checkout 中并没有找到 `common/cache/` 目录，因此完整缓存后端并未随仓库一起提供。
+- 默认运行路径只支持 Redis，不再默认尝试 MySQL。
+- 如果 Redis 不可用，程序会明确记录 `Redis unavailable, cache disabled`，然后继续以 no-cache 模式运行。
+- 成功请求会在返回后立即写入 Redis，因此中断后重跑可以复用已成功缓存的请求。
 
-因此，本次为 GPQA / MedQA / MMLUPro + AvengersPro / RouterDC 实验准备的配置默认采用：
-- `cache.enabled: false`
-- 不依赖 MySQL
-- 也不伪造 Redis 支持
+统一配置约定：
+- `REDIS_HOST`
+- `REDIS_PORT`
+- `REDIS_PASSWORD`
+- `REDIS_DB`
+- `REDIS_KEY_PREFIX`
+- `REDIS_SSL`
 
-如果后续要扩展 Redis，最小改造方案是：
-1. 在 `common/cache/` 下补一个 Redis store 实现，例如 `redis_store.py`。
-2. 在 `common.cache.decorator` / cache config parser 中增加 `redis:` 分支。
-3. 让 `create_cache_decorator(...)` 能根据配置识别：
-   - `cache.redis.host`
-   - `cache.redis.port`
-   - `cache.redis.password`
-   - `cache.redis.db`
-   - `cache.redis.key_prefix`
-4. 对齐 `llm2/src/cache.py` 中的 key 生成与序列化思路。
+推荐用法：
+1. 在 `.env` 中填入 Redis 连接配置。
+2. 直接运行 collector / connectivity / avengers 相关脚本，无需额外 wrapper、无需 `--cache-mode redis`。
+3. 启动日志会显示：
+   - `Cache enabled: True`
+   - `Cache backend: redis`
+   - `Redis cache connected: host:port/db prefix=...`
+   - 或 `Redis unavailable, cache disabled: ...`
+4. 请求期间可在 debug 日志中看到 `cache hit` / `cache miss` / `cache write`。
 
-建议：
-- 先用当前无缓存方案跑通 collector + AvengersPro。
-- 等实验链条稳定后，再单独补 Redis，不要把它塞进首轮可运行路径里。
+说明：
+- 仓库中的 MySQL 缓存文件仅保留为 deprecated legacy stub，不参与默认运行路径。
+- 如需显式禁用缓存，只应通过明确的 disable 入口，而不是依赖默认回退到 SQL。

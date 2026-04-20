@@ -27,10 +27,11 @@ This repo now contains a minimal runnable path for:
 
 ## MVP sequence
 1. Fill environment variables from `.env.example`.
-2. Run collector.
-3. Generate AvengersPro train/test JSONL.
-4. Run AvengersPro Simple.
-5. Run AvengersPro Balance.
+2. Ensure Redis connection settings are present in `.env`.
+3. Run collector.
+4. Generate AvengersPro train/test JSONL.
+5. Run AvengersPro Simple.
+6. Run AvengersPro Balance.
 
 ## Full sequence
 1. MVP sequence
@@ -38,6 +39,8 @@ This repo now contains a minimal runnable path for:
 3. Run RouterDC in a GPU + DeepSpeed environment using the template script
 
 ## Cache note
-- Current repo does **not** natively support Redis.
-- MVP configs intentionally set `cache.enabled: false`.
-- See `docs/redis_extension_notes.md` for a minimal future extension sketch.
+- Runtime cache is Redis-first and Redis-only.
+- Main configs now default to Redis cache enabled.
+- You do not need wrapper flags or `--cache-mode redis` for normal runs.
+- If Redis is unavailable, runtime logs `Redis unavailable, cache disabled` and continues uncached.
+- Successful requests are written to Redis immediately, so reruns after Ctrl+C can reuse completed samples.

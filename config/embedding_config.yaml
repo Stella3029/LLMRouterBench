@@ -1,29 +1,27 @@
 # Embedding Model Configuration for LLMRouterBench
 # Used by EmbeddingGenerator for generating text embeddings
 
-# Embedding model configuration
 embedding_model:
   name: gte_Qwen2-7B-instruct # bge-m3, gte_Qwen2-7B-instruct, Qwen3-Embedding-8B
   api_model_name: gte_Qwen2-7B-instruct # bge-m3, gte_Qwen2-7B-instruct, Qwen3-Embedding-8B
   generator_type: embedding
   base_url: https://sd3g8mam6uj313gtp0fbg.apigateway-cn-beijing.volceapi.com/v1
-  api_key: HUOSHAN_API_KEY  # Will be read from environment variable
+  api_key: HUOSHAN_API_KEY
   timeout: 600
   max_context_length: 25000
 
-# Cache configuration (optional)
 cache:
-  enabled: true
+  enabled: REDIS_ENABLED
+  backend: redis
   force_override_cache: false
-  mysql:
-    host: MYSQL_HOST
-    port: MYSQL_PORT
-    user: MYSQL_USER
-    password: MYSQL_PASSWORD
-    database: avengers_cache_demo
-    table_name: generator_output_cache
+  redis:
+    host: REDIS_HOST
+    port: REDIS_PORT
+    password: REDIS_PASSWORD
+    db: REDIS_DB
+    key_prefix: REDIS_KEY_PREFIX
+    ssl: REDIS_SSL
     ttl_seconds: null
-    use_connection_pool: false
   key_generator:
     cached_parameters: ["model", "input"]
     hash_algorithm: blake2b
@@ -31,5 +29,7 @@ cache:
   conditions:
     cache_successful_only: true
     min_completion_tokens: 0
+    cache_raw_response: false
+    refresh_if_missing_raw_response: false
   log_level: INFO
   enable_stats: true

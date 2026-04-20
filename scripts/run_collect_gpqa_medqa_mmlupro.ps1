@@ -4,8 +4,8 @@ $RepoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $RepoRoot
 
 $config = Join-Path $RepoRoot 'config/data_collector_gpqa_medqa_mmlupro.yaml'
-$cacheMode = if ($env:REDIS_ENABLED -match '^(?i:true|1|yes|on)$') { 'redis' } else { 'disabled' }
-Write-Host "[collector] cache mode: $cacheMode"
+Write-Host "[collector] runtime cache backend: redis (default)"
+Write-Host "[collector] Redis settings are loaded from .env / environment at runtime"
 Write-Host "[collector] readiness check"
 python scripts/check_avengerspro_ready.py --repo-root $RepoRoot
 Write-Host "[collector] showing config info: $config"

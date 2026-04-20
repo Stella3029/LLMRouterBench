@@ -121,57 +121,37 @@ run:
 #############################
 # 4) Cache Configuration (optional)
 #############################
-# - Purpose: Provide a MySQL-backed persistent cache for model outputs to reduce duplicate calls and cost.
+# - Purpose: Provide a Redis-backed persistent cache for model outputs to reduce duplicate calls and cost.
 # - Source of truth: common/cache/config.py (full field definitions), common/cache/decorator.py (integration logic).
 # - Important notes:
-#   - When enabled=false: cache is disabled.
-#   - When force_override_cache=true: always call the real API but still write results into the cache (useful when iterating prompts).
-#   - key_generator.cached_parameters: choose which parameters contribute to the cache key.
-#       • Chat/Completions (direct/multimodal) typical value:
-#         ["model", "temperature", "top_p", "messages", "reasoning_effort"] (default)
-#       • Embedding (generator_type=embedding) should be:
-#         ["model", "input"] — matching embeddings API input.
-#     See common/cache/key_generator.py.
+#   - Runtime cache is Redis-only and enabled by default.
+#   - If Redis is unavailable, runtime logs `Redis unavailable, cache disabled` and continues without cache.
+#   - When force_override_cache=true: always call the real API but still write successful results into Redis.
+#   - key_generator.cached_parameters decides which request parameters contribute to the cache key.
 cache:
   enabled: true
-  force_override_cache: false # If true: skip reading cache but still write results (useful for building cache)
+  backend: redis
+  force_override_cache: false
 
-  # MySQL connection (values can be env var names like MYSQL_HOST, MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD)
-  mysql:
-    host: MYSQL_HOST              # Database host (env var name or direct value)
-    port: MYSQL_PORT              # Port (env var name or direct value)
-    user: MYSQL_USER              # Username (env var name or direct value)
-    password: MYSQL_PASSWORD      # Password (env var name or direct value)
-    database: avengers_cache_demo # Database name
-    table_name: generator_output_cache  # Table name (auto-created on startup)
-    charset: utf8mb4              # Charset (default utf8mb4)
-    autocommit: true              # Autocommit (default true)
-    ttl_seconds: null             # TTL (seconds), null means never expire
+  redis:
+    host: REDIS_HOST
+    port: REDIS_PORT
+    password: REDIS_PASSWORD
+    db: REDIS_DB
+    key_prefix: REDIS_KEY_PREFIX
+    ssl: REDIS_SSL
+    ttl_seconds: null
 
-    # Connection pool (usually unnecessary; try for high concurrency or unstable connections)
-    use_connection_pool: false    # Enable connection pool (default false)
-    pool_size: 4                  # Pool size (default 4)
-    max_overflow: 2               # Allowed overflow connections (default 2)
-    pool_timeout: 10              # Acquire connection timeout seconds (default 10)
-    pool_recycle: 3600            # Connection recycle seconds (default 3600)
-
-  # Cache key generation (decides which request differences become distinct cache entries)
   key_generator:
-    # Chat/Completions default: model/temperature/top_p/messages/reasoning_effort together decide the key
-    # If your model uses additional output-affecting params (e.g., system prompt), add them here to avoid false hits
     cached_parameters: ["model", "temperature", "top_p", "messages", "reasoning_effort"]
-    # For embeddings (only when models[*].generator_type=embedding), set to:
-    # cached_parameters: ["model", "input"]
-    hash_algorithm: blake2b       # Options: blake2b | sha256 | sha1 | md5
-    hash_digest_size: 16          # Digest length (effective for blake2b)
+    hash_algorithm: blake2b
+    hash_digest_size: 16
 
-  # Cache write conditions
   conditions:
-    cache_successful_only: true   # Cache only "successful" generations (for Embedding: non-empty vector counts as success)
-    min_completion_tokens: 0      # Minimum completion_tokens threshold (text generation only)
-    cache_raw_response: false     # Cache complete API response JSON (required for extract_fields to work)
-    refresh_if_missing_raw_response: false  # Re-fetch from API if cached data is missing raw_response
+    cache_successful_only: true
+    min_completion_tokens: 0
+    cache_raw_response: false
+    refresh_if_missing_raw_response: false
 
-  # Cache logging and stats
   log_level: INFO
   enable_stats: true

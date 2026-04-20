@@ -1,40 +1,19 @@
 # External Benchmark Cache Configuration
-# This configuration provides caching functionality for external benchmarks
-# Only cache-related settings are needed - model configurations are handled in your benchmark code
+# Redis is the default and only runtime cache backend.
 
 cache:
-  # Enable or disable caching
-  enabled: true
-
-  # Force override cache: when True, always call API but still cache results
-  # Useful for testing new prompts while building cache for later use
+  enabled: REDIS_ENABLED
+  backend: redis
   force_override_cache: false
-
-  # MySQL database configuration
-  mysql:
-    host: localhost
-    port: 3306
-    # User and password can be set here or via environment variables:
-    # MYSQL_USER and MYSQL_PASSWORD
-    user: null  # Will use MYSQL_USER env var or 'root'
-    password: null  # Will use MYSQL_PASSWORD env var or ''
-    database: avengers_cache
-    table_name: generator_output_cache
-    charset: utf8mb4
-    autocommit: true
-    ttl_seconds: null  # No expiration by default
-
-    # Connection pool settings (usually not needed for small benchmarks)
-    use_connection_pool: false
-    pool_size: 4
-    max_overflow: 2
-    pool_timeout: 10
-    pool_recycle: 3600
-
-  # Cache key generation settings
+  redis:
+    host: REDIS_HOST
+    port: REDIS_PORT
+    password: REDIS_PASSWORD
+    db: REDIS_DB
+    key_prefix: REDIS_KEY_PREFIX
+    ssl: REDIS_SSL
+    ttl_seconds: null
   key_generator:
-    # Parameters included in cache key generation
-    # These should match the parameters that affect model output
     cached_parameters:
       - "model"
       - "temperature"
@@ -43,14 +22,10 @@ cache:
       - "reasoning_effort"
     hash_algorithm: blake2b
     hash_digest_size: 16
-
-  # Conditions for what to cache
   conditions:
-    # Only cache successful responses (not error messages)
     cache_successful_only: true
-    # Minimum completion tokens required to cache
     min_completion_tokens: 0
-
-  # Logging and statistics
+    cache_raw_response: false
+    refresh_if_missing_raw_response: false
   log_level: INFO
   enable_stats: true

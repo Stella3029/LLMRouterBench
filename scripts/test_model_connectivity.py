@@ -104,6 +104,13 @@ def main() -> int:
         return 1
 
     cache_config = None if args.disable_cache else benchmark_config.cache_config
+    if args.disable_cache:
+        print("[connectivity] Cache enabled: False")
+        print("[connectivity] Cache backend: disabled")
+    else:
+        print("[connectivity] Cache enabled: True")
+        print("[connectivity] Cache backend: redis")
+        print("[connectivity] Redis connection status will be reported by runtime cache logs")
 
     results: List[Dict[str, Any]] = []
     for model in selected_models:

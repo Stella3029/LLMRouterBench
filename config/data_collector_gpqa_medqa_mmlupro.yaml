@@ -97,9 +97,8 @@ run:
   concurrency: 8
   log_level: INFO
 
-# Redis cache is now supported through common/cache and used by generators.
 cache:
-  enabled: REDIS_ENABLED
+  enabled: true
   backend: redis
   force_override_cache: false
   redis:
@@ -122,6 +121,5 @@ cache:
   log_level: INFO
   enable_stats: true
 
-# Grader cache is unused for GPQA/MedQA/MMLUPro exact-match evaluation.
 grader_cache:
   enabled: false

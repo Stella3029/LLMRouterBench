@@ -140,6 +140,12 @@ pip install -r requirements.txt
 
 ## 快速开始
 
+缓存行为：
+- 运行时缓存已统一为 **Redis-first、Redis-only**。
+- collector / connectivity / avengers 相关入口默认直接走 Redis。
+- 只需在 `.env` 中填写 Redis 配置，无需 wrapper、无需 `--cache-mode redis`，也不会再回退到 MySQL。
+- 如果 Redis 不可用，程序会记录 `Redis unavailable, cache disabled`，然后继续以无缓存模式运行。
+
 <table>
 <tr>
 <td>

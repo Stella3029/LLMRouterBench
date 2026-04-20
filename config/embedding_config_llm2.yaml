@@ -1,5 +1,5 @@
 # Embedding config adapted from llm2/configs/default.yaml.
-# This file now uses the shared unified environment variable names and real Redis cache.
+# This file uses the shared unified Redis cache settings.
 
 embedding_model:
   name: nomic-embed-text
@@ -11,7 +11,7 @@ embedding_model:
   max_context_length: 8192
 
 cache:
-  enabled: REDIS_ENABLED
+  enabled: true
   backend: redis
   force_override_cache: false
   redis:
