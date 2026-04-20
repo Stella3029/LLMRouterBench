@@ -136,5 +136,11 @@ class CacheDecorator:
 
 
 def create_cache_decorator(cache_config: Optional[Dict[str, Any]] = None) -> CacheDecorator:
-    config = CacheConfig.from_dict(cache_config or {})
+    if cache_config is None:
+        # Callers that do not explicitly provide cache settings should not
+        # silently fall back to an enabled default Redis config.
+        config = CacheConfig(enabled=False, backend="redis")
+        return CacheDecorator(config)
+
+    config = CacheConfig.from_dict(cache_config)
     return CacheDecorator(config)
